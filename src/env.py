@@ -11,7 +11,7 @@ class Environment:
         self.width = width
         self.height = height
 
-        # initialize obstacles as boxes in the form (x, y, w, h)
+        # initialize static obstacles as black boxes in the form (x, y, w, h)
 
         n_cols = 3
         n_rows = 10
@@ -26,6 +26,7 @@ class Environment:
 
                 self.static_obstacles.append((x, y, w, h))
 
+        # initialize dynamic obstacles red circles
         for _ in range(n_dynamic_obstacles):
             self.dynamic_obstacles.append((np.random.randint(0, self.width), np.random.randint(0, self.height)))
 
@@ -48,17 +49,15 @@ class Environment:
 
     def _draw_dynamic_obstacles(self, map: np.array):
         for (x, y) in self.dynamic_obstacles:
-            self._draw_triangle(map, x, y)
+            cv2.circle(map, (x, y), 7, color=(0, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
         return map
 
     def _draw_triangle(self, map, x: int, y: int):
-        d = 15
+        d = 16
         center = (x, y)
         vertices = np.array([
             [x, y - d / math.sqrt(3)],
             [x + d/2, y + d / (2 * math.sqrt(3))],
             [x - d/2, y + d / (2 * math.sqrt(3))]
         ])
-        cv2.polylines(map, np.int32([vertices]), isClosed=True, color=0, thickness=1)
-        cv2.polylines
-        cv2.fillPoly(map, np.int32([vertices]), color=(0, 255, 0), lineType=cv2.LINE_AA)
+        cv2.fillPoly(map, np.int32([vertices]), color=(0, 0.8, 0), lineType=cv2.LINE_AA)
