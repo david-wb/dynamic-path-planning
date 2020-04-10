@@ -1,11 +1,13 @@
 from time import sleep
-
+import cv2
 from src.env import Environment
 
-env = Environment(width=90, height=160)
+env = Environment()
 
 while True:
-    print("test")
     sleep(0.1)
     env.step()
-    env.draw()
+    map = env.draw()
+
+    cv2.imshow("environment", map)
+    cv2.waitKey(1)
