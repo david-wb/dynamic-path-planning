@@ -1,13 +1,42 @@
 import math
+from typing import List
 
 import numpy as np
 import cv2
 
+np.random.seed(0)
+
+
+class MovingObstacle:
+    def __init__(self, x: int, y: int, radius=10):
+        self.x = x
+        self.y = y
+        self.radius = radius
+
+        vx = np.random.uniform(0, 1.0)
+        vy = np.random.uniform(0, 1.0)
+        self.velocity = np.array([vx, vy])
+
+    def draw(self, map: np.array) -> np.array:
+        x = int(self.x)
+        y = int(self.y)
+        cv2.circle(map, (x, y), self.radius, color=(0, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
+        return map
+
+    def update(self, map_w: int, map_h: int):
+        if self.x > map_w or self.x < 0:
+            self.velocity[0] *= -1
+        if self.y > map_h or self.y < 0:
+            self.velocity[1] *= -1
+
+        self.x += self.velocity[0]
+        self.y += self.velocity[1]
+
 
 class Environment:
-    def __init__(self, width=200, height=400, n_dynamic_obstacles=5):
+    def __init__(self, width=200, height=400, n_moving_obstacles=5):
         self.static_obstacles = []
-        self.dynamic_obstacles = []
+        self.moving_obstacles: List[MovingObstacle] = []
         self.width = width
         self.height = height
 
@@ -19,19 +48,23 @@ class Environment:
         dy = self.height // (n_rows + 1)
         for r in range(10):
             for c in range(3):
-                w = dx//2
-                h = dy//2
+                w = dx//2 + np.random.randint(-5, 15)
+                h = dy//2 + np.random.randint(-5, 10)
                 x = (c + 1) * dx - w//2
                 y = (r + 1) * dy - h//2
 
                 self.static_obstacles.append((x, y, w, h))
 
         # initialize dynamic obstacles red circles
-        for _ in range(n_dynamic_obstacles):
-            self.dynamic_obstacles.append((np.random.randint(0, self.width), np.random.randint(0, self.height)))
+        for _ in range(n_moving_obstacles):
+            x = np.random.randint(0, self.width)
+            y = np.random.randint(0, self.height)
+            radius = 7
+            self.moving_obstacles.append(MovingObstacle(x, y, radius))
 
     def step(self):
-        pass
+        for obs in self.moving_obstacles:
+            obs.update(self.width, self.height)
 
     def check_collision(self, x: float, y: float) -> bool:
         raise NotImplementedError()
@@ -39,7 +72,7 @@ class Environment:
     def draw(self) -> np.array:
         map = np.ones((self.height, self.width, 3))
         self._draw_static_obstacles(map)
-        self._draw_dynamic_obstacles(map)
+        self._draw_moving_obstacles(map)
         return map
 
     def _draw_static_obstacles(self, map: np.array):
@@ -47,9 +80,9 @@ class Environment:
             map = cv2.rectangle(map, (x, y), (x + w, y + h), color=0, thickness=-1)
         return map
 
-    def _draw_dynamic_obstacles(self, map: np.array):
-        for (x, y) in self.dynamic_obstacles:
-            cv2.circle(map, (x, y), 7, color=(0, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
+    def _draw_moving_obstacles(self, map: np.array):
+        for obs in self.moving_obstacles:
+            map = obs.draw(map)
         return map
 
     def _draw_triangle(self, map, x: int, y: int):
