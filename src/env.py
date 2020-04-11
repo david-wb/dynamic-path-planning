@@ -3,6 +3,7 @@ from typing import List
 
 import numpy as np
 import cv2
+import src.utils as utils
 
 np.random.seed(0)
 
@@ -66,8 +67,17 @@ class Environment:
         for obs in self.moving_obstacles:
             obs.update(self.width, self.height)
 
-    def check_collision(self, x: float, y: float) -> bool:
-        raise NotImplementedError()
+    def check_static_collision(self, x: float, y: float, radius: float) -> bool:
+        """checks if the given circle collides with any static obstacle on the map """
+
+        if x < 0 or x > self.width or y < 0 or y > self.height:
+            return True
+
+        for (rx, ry, w ,h) in self.static_obstacles:
+            if utils.circle_touches_rect(x, y, radius, rx, ry, w, h):
+                return True
+
+        return False
 
     def draw(self) -> np.array:
         map = np.ones((self.height, self.width, 3))
@@ -94,3 +104,4 @@ class Environment:
             [x - d/2, y + d / (2 * math.sqrt(3))]
         ])
         cv2.fillPoly(map, np.int32([vertices]), color=(0, 0.8, 0), lineType=cv2.LINE_AA)
+
