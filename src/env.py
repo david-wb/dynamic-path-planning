@@ -35,7 +35,7 @@ class MovingObstacle:
 
 
 class Environment:
-    def __init__(self, width=200, height=400, n_moving_obstacles=5):
+    def __init__(self, width=300, height=500, n_moving_obstacles=5):
         self.static_obstacles = []
         self.moving_obstacles: List[MovingObstacle] = []
         self.width = width
@@ -44,15 +44,19 @@ class Environment:
         # initialize static obstacles as black boxes in the form (x, y, w, h)
 
         n_cols = 3
-        n_rows = 10
+        n_rows = 9
         dx = self.width // (n_cols + 1)
         dy = self.height // (n_rows + 1)
-        for r in range(10):
-            for c in range(3):
-                w = dx//2 + np.random.randint(-5, 15)
-                h = dy//2 + np.random.randint(-5, 10)
-                x = (c + 1) * dx - w//2
-                y = (r + 1) * dy - h//2
+        for r in range(n_rows):
+            x_shift = np.random.randint(-20, 20)
+
+            for c in range(n_cols):
+                y_shift = np.random.randint(-5, 5)
+
+                w = dx//2 + np.random.randint(-10, 20)
+                h = dy//2 + np.random.randint(-10, 20)
+                x = (c + 1) * dx - w//2 + x_shift
+                y = (r + 1) * dy - h//2 + y_shift
 
                 self.static_obstacles.append((x, y, w, h))
 
