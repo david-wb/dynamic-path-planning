@@ -77,7 +77,7 @@ class Environment:
         if x < 0 or x > self.width or y < 0 or y > self.height:
             return True
 
-        for (rx, ry, w ,h) in self.static_obstacles:
+        for (rx, ry, w, h) in self.static_obstacles:
             if utils.circle_touches_rect(x, y, radius, rx, ry, w, h):
                 return True
 
