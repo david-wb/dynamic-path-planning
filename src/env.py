@@ -77,7 +77,7 @@ class Environment:
         if x < 0 or x > self.width or y < 0 or y > self.height:
             return True
 
-        for (rx, ry, w ,h) in self.static_obstacles:
+        for (rx, ry, w, h) in self.static_obstacles:
             if utils.circle_touches_rect(x, y, radius, rx, ry, w, h):
                 return True
 
@@ -87,6 +87,19 @@ class Environment:
         map = np.ones((self.height, self.width, 3))
         self._draw_static_obstacles(map)
         self._draw_moving_obstacles(map)
+        return map
+
+    def draw_path(self, map: np.array, tree, start, goal):
+
+        current_node = goal
+        while current_node is not start:
+            map = cv2.line(map, (int(current_node[0]), int(current_node[1])),(int(tree[current_node][0]), int(tree[current_node][1])), color=(1, 0, 0), thickness=3, lineType=cv2.LINE_AA)
+            map = cv2.circle(map, (int(current_node[0]), int(current_node[1])), 5, color=(1, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
+            current_node = tree[current_node]
+
+        # for node in tree:
+        #     map = cv2.circle(map, (int(node[0]), int(node[1])), 10, color=(1, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
+
         return map
 
     def _draw_static_obstacles(self, map: np.array):
