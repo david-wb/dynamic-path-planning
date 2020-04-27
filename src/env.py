@@ -89,6 +89,19 @@ class Environment:
         self._draw_moving_obstacles(map)
         return map
 
+    def draw_path(self, map: np.array, tree, start, goal):
+
+        current_node = goal
+        while current_node is not start:
+            map = cv2.line(map, (int(current_node[0]), int(current_node[1])),(int(tree[current_node][0]), int(tree[current_node][1])), color=(1, 0, 0), thickness=3, lineType=cv2.LINE_AA)
+            map = cv2.circle(map, (int(current_node[0]), int(current_node[1])), 5, color=(1, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
+            current_node = tree[current_node]
+
+        # for node in tree:
+        #     map = cv2.circle(map, (int(node[0]), int(node[1])), 10, color=(1, 0, 1), thickness=-1, lineType=cv2.LINE_AA)
+
+        return map
+
     def _draw_static_obstacles(self, map: np.array):
         for (x, y, w, h) in self.static_obstacles:
             map = cv2.rectangle(map, (x, y), (x + w, y + h), color=0, thickness=-1)
