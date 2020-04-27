@@ -1,5 +1,5 @@
 import math
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import cv2
@@ -83,6 +83,15 @@ class Environment:
 
         return False
 
+    def detect_moving_obstacles(self, x: float, y: float, distance=20.0) -> Optional[MovingObstacle]:
+        for obs in self.moving_obstacles:
+            dx = x - obs.x
+            dy = y - obs.y
+            d = np.linalg.norm([dx, dy])
+
+            if d <= distance:
+                return obs
+
     def draw(self) -> np.array:
         map = np.ones((self.height, self.width, 3))
         self._draw_static_obstacles(map)
@@ -111,14 +120,4 @@ class Environment:
         for obs in self.moving_obstacles:
             map = obs.draw(map)
         return map
-
-    def _draw_triangle(self, map, x: int, y: int):
-        d = 16
-        center = (x, y)
-        vertices = np.array([
-            [x, y - d / math.sqrt(3)],
-            [x + d/2, y + d / (2 * math.sqrt(3))],
-            [x - d/2, y + d / (2 * math.sqrt(3))]
-        ])
-        cv2.fillPoly(map, np.int32([vertices]), color=(0, 0.8, 0), lineType=cv2.LINE_AA)
 
