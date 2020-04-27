@@ -1,8 +1,8 @@
-import math
 from typing import List, Optional
 
-import numpy as np
 import cv2
+import numpy as np
+
 import src.utils as utils
 
 np.random.seed(0)

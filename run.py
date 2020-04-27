@@ -4,7 +4,6 @@ import cv2
 
 from src.env import Environment
 from src.robot import Robot
-from src.rrt import RRT
 
 # Create environment
 env = Environment()
