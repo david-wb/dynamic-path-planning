@@ -5,7 +5,7 @@ import numpy as np
 
 import src.utils as utils
 
-np.random.seed(0)
+np.random.seed(1)
 
 
 class MovingObstacle:
@@ -33,9 +33,12 @@ class MovingObstacle:
         self.x += self.velocity[0]
         self.y += self.velocity[1]
 
+    def get_pos(self):
+        return np.array([self.x, self.y], dtype=np.float)
+
 
 class Environment:
-    def __init__(self, width=300, height=500, n_moving_obstacles=5):
+    def __init__(self, width=300, height=500, n_moving_obstacles=10):
         self.static_obstacles = []
         self.moving_obstacles: List[MovingObstacle] = []
         self.temp_moving_obstacles = []
@@ -97,7 +100,7 @@ class Environment:
         return False
 
     def check_collision(self, x: float, y: float, radius: float) -> bool:
-        return self.check_dynamic_collision(x,y,radius) or self.check_static_collision(x,y,radius)
+        return self.check_dynamic_collision(x, y, radius) or self.check_static_collision(x, y, radius)
 
     def add_dynamic_obstacle(self,x: float, y: float, radius: float):
         self.temp_moving_obstacles.append((x, y, radius))

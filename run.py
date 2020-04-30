@@ -8,14 +8,14 @@ from src.robot import Robot
 # Create environment
 env = Environment()
 
-robot = Robot(env=env, start=(1, 1), goal=(295, 400))
+robot = Robot(env=env, start=(1, 1), goal=(295, 400), strategy='lookahead')
 
 i = 0
 while True:
     i += 1
     print('step: ', i)
 
-    sleep(0.01)
+    sleep(0.03)
 
     # Update environment
     env.step()
