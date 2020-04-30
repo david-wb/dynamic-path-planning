@@ -5,7 +5,6 @@ import numpy as np
 
 from src.dynamic_rrt import DynamicRRT, Node
 from src.env import Environment, MovingObstacle
-from src.rrt import RRT
 
 
 class Robot:

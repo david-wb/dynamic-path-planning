@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 import numpy as np
-from sklearn.neighbors import KDTree
 
 from .env import Environment, MovingObstacle
 
