@@ -44,7 +44,7 @@ class Robot:
         obstacle = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1])
 
         if obstacle is not None:
-            # TODO: re-plan the path
+            self.path = self.rrt_planner.replan(obstacle,self.current_pos,current_node)
             print('detected moving obstacle')
         else:
             if distance <= self.velocity:

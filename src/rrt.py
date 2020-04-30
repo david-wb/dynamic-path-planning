@@ -16,6 +16,7 @@ class RRT:
         self.tree = {}
         self.start = None
         self.goal = None
+        self.path = None
 
     def plan(self, start, goal):
         self.start = start
@@ -33,6 +34,49 @@ class RRT:
                     break
         return self.tree
 
+    def replan(self, obstacle,current_pos,current_node):
+        # get all nodes within the tree and search for node impacted by the obstacle
+        nodes = list(self.tree.keys())
+        np_nodes = np.asarray(nodes)
+        kd_tree = KDTree(np_nodes)
+        obstructed_index = kd_tree.query_radius([[obstacle.x, obstacle.y]], r=2*obstacle.radius)
+
+        # search for the first remaining path node after separation
+        obstructed = False
+        orphan_node_index = -1
+        for index in obstructed_index[0]:
+            if nodes[index] in self.path:
+                obstructed = True
+                if nodes[index] == self.goal:
+                    print("obstacle is at goal, impossible to re-plan")
+                else:
+                    self.tree.pop(nodes[index])
+                    orphan_node_index = max(orphan_node_index,index)
+        if not obstructed:
+            return self.path
+        orphan_node = self.path[self.path.index(nodes[orphan_node_index])]
+
+        # add the dynamic obstacle obstacle into map
+        obstacle_current_x = obstacle.x
+        obstacle_current_y = obstacle.y
+        for i in range(5):
+            self.environment.add_dynamic_obstacle(obstacle_current_x,obstacle_current_y,obstacle.radius)
+            obstacle_current_x += obstacle.velocity[0]
+            obstacle_current_y += obstacle.velocity[1]
+
+        # connect robot current location to the tree
+        neighbor_node_index = kd_tree.query_radius([[current_pos[0], current_pos[1]]], r=self.delta_q)
+        for index in neighbor_node_index[0]:
+            self.tree[nodes[index]] = current_pos
+
+        replanner = RRT(self.environment, self.delta_q, self.max_node, self.collision_tolerance)
+        replanner.plan((current_pos[0],current_pos[1]), orphan_node)
+        replanned_path = replanner.get_path()
+
+        pre_path = self.path[:self.path.index(current_node)+1]
+        post_path = self.path[self.path.index(orphan_node):]
+        return pre_path + replanned_path + post_path
+
     def get_path(self) -> List[np.ndarray]:
         """Returns a list of numpy (x, y) positions from start to goal."""
         assert self.start is not None and self.goal is not None
@@ -41,11 +85,13 @@ class RRT:
         node = self.goal
         while node is not None:
             path.append(node)
+            print(node)
             node = self.tree.get(node)
 
         # reverse
         path = path[::-1]
         assert path[0] == self.start
+        self.path = path
         return path
 
     def random_point(self):
@@ -56,7 +102,7 @@ class RRT:
             y = np.random.uniform() * self.environment.height
             point = (x, y)
             # check if the random point is in free space
-            if not self.environment.check_static_collision(x,y,self.collision_tolerance):
+            if not self.environment.check_collision(x,y,self.collision_tolerance):
                 valid_point = True
         return point
 
@@ -74,6 +120,6 @@ class RRT:
         new_node_x = nearest_node[0] + math.cos(new_node_direction) * self.delta_q
         new_node_y = nearest_node[1] + math.sin(new_node_direction) * self.delta_q
         new_node = (new_node_x, new_node_y)
-        if not self.environment.check_static_collision(new_node_x, new_node_y, self.collision_tolerance):
+        if not self.environment.check_collision(new_node_x, new_node_y, self.collision_tolerance):
             return new_node
 

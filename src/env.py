@@ -38,6 +38,7 @@ class Environment:
     def __init__(self, width=300, height=500, n_moving_obstacles=5):
         self.static_obstacles = []
         self.moving_obstacles: List[MovingObstacle] = []
+        self.temp_moving_obstacles = []
         self.width = width
         self.height = height
 
@@ -82,6 +83,24 @@ class Environment:
                 return True
 
         return False
+
+    def check_dynamic_collision(self, x: float, y: float, radius: float) -> bool:
+        """checks if the given circle collides with given dynamic obstacle """
+
+        if x < 0 or x > self.width or y < 0 or y > self.height:
+            return True
+
+        for (rx, ry, rradius) in self.temp_moving_obstacles:
+            if utils.circle_touches_circle(x, y, radius, rx, ry, rradius):
+                return True
+
+        return False
+
+    def check_collision(self, x: float, y: float, radius: float) -> bool:
+        return self.check_dynamic_collision(x,y,radius) or self.check_static_collision(x,y,radius)
+
+    def add_dynamic_obstacle(self,x: float, y: float, radius: float):
+        self.temp_moving_obstacles.append((x, y, radius))
 
     def detect_moving_obstacles(self, x: float, y: float, distance=20.0) -> Optional[MovingObstacle]:
         for obs in self.moving_obstacles:
