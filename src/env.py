@@ -2,10 +2,8 @@ from typing import List, Optional
 
 import cv2
 import numpy as np
-
+np.random.seed(3)
 import src.utils as utils
-
-np.random.seed(1)
 
 
 class MovingObstacle:
@@ -39,6 +37,14 @@ class MovingObstacle:
     def check_collision(self, point: np.ndarray, radius: float):
         d = np.linalg.norm(self.get_pos() - point)
         return d <= self.radius + radius
+
+    def get_future_positions(self, steps: int) -> List['MovingObstacle']:
+        result = []
+        pos = self.get_pos()
+        for i in range(steps):
+            pos += self.velocity
+            result.append(MovingObstacle(pos[0], pos[1], self.radius))
+        return result
 
 
 class Environment:
@@ -109,14 +115,16 @@ class Environment:
     def add_dynamic_obstacle(self,x: float, y: float, radius: float):
         self.temp_moving_obstacles.append((x, y, radius))
 
-    def detect_moving_obstacles(self, x: float, y: float, distance=20.0) -> Optional[MovingObstacle]:
+    def detect_moving_obstacles(self, x: float, y: float, distance=20.0) -> Optional[List[MovingObstacle]]:
+        result = []
         for obs in self.moving_obstacles:
             dx = x - obs.x
             dy = y - obs.y
             d = np.linalg.norm([dx, dy])
 
             if d <= distance:
-                return obs
+                result.append(obs)
+        return result
 
     def draw(self) -> np.array:
         map = np.ones((self.height, self.width, 3))

@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 import numpy as np
+import scipy.stats as stats
 
 from .env import Environment, MovingObstacle
 
@@ -134,10 +135,18 @@ class DynamicRRT:
         return path
 
     def sample_point(self, extra_obs: Optional[List[MovingObstacle]] = None) -> np.ndarray:
-        while True:
-            x = np.random.uniform() * self.environment.width
-            y = np.random.uniform() * self.environment.height
+        x_upper = self.environment.width
+        y_upper = self.environment.height
+        x_mu = self.goal_pos[0]
+        y_mu = self.goal_pos[1]
 
+        sigma = 200
+        X = stats.truncnorm(-x_mu / sigma, (x_upper - x_mu) / sigma, loc=x_mu, scale=sigma)
+        Y = stats.truncnorm(-y_mu / sigma, (y_upper - y_mu) / sigma, loc=y_mu, scale=sigma)
+
+        while True:
+            x = X.rvs(1)[0]
+            y = Y.rvs(1)[0]
             valid = True
             if extra_obs:
                 for obs in extra_obs:

@@ -6,7 +6,7 @@ from src.env import Environment
 from src.robot import Robot
 
 # Create environment
-env = Environment()
+env = Environment(n_moving_obstacles=20)
 
 robot = Robot(env=env, start=(1, 1), goal=(295, 400), strategy='lookahead')
 

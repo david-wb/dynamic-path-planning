@@ -15,7 +15,7 @@ class Robot:
                  strategy='lookahead'):
         self.env = env
         self.radius = 5
-        self.rrt_planner = DynamicRRT(env, 10, 10000, self.radius + 5)
+        self.rrt_planner = DynamicRRT(env, 10, 1000, self.radius + 5)
         self.start = start
         self.goal = goal
         self.strategy = strategy
@@ -45,10 +45,10 @@ class Robot:
         distance = np.linalg.norm(direction)
         direction /= (distance + 1e-8)
 
-        obstacle = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=50)
+        obstacles = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=50)
 
-        if obstacle is not None and self.replan_wait == 0:
-            self.replan_lookahead(obstacle)
+        if len(obstacles) > 0 and self.replan_wait == 0:
+            self.replan_lookahead(obstacles)
 
         if distance <= self.velocity:
             self.current_node_i += 1
@@ -87,28 +87,22 @@ class Robot:
 
         return result
 
-    def replan_lookahead(self, obstacle: MovingObstacle):
+    def replan_lookahead(self, obstacles: List[MovingObstacle]):
         future_robot_poses = self.get_future_positions(10)
         future_obs: List[MovingObstacle] = []
-        obs_pos = obstacle.get_pos()
-        none_colliding_future_obs = []
-
-        for i in range(10):
-            obs_pos += obstacle.velocity
-            future_obs.append(MovingObstacle(obs_pos[0], obs_pos[1], obstacle.radius))
-
-            if np.linalg.norm(self.current_pos - obs_pos) < obstacle.radius + self.radius:
-                none_colliding_future_obs.append(MovingObstacle(obs_pos[0], obs_pos[1], obstacle.radius))
+        for obs in obstacles:
+            future_obs += obs.get_future_positions(10)
 
         collision_obs = []
-        for (r_p, obs) in zip(future_robot_poses, future_obs):
-            distance = np.linalg.norm(r_p - obs.get_pos())
-            if distance < obstacle.radius + self.radius:
-                collision_obs.append(obs)
+        for i, robot_pos in enumerate(future_robot_poses):
+            for obs in future_obs:
+                distance = np.linalg.norm(robot_pos - obs.get_pos())
+                if distance < obs.radius + self.radius:
+                    collision_obs.append(obs)
 
         if collision_obs:
             print('replanning...')
-            self.replan_wait = 5
+            self.replan_wait = 10
             self.rrt_planner.replan(collision_obs,
                                     self.path[self.current_node_i],
                                     np.copy(self.current_pos))
