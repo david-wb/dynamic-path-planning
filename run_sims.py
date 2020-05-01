@@ -39,6 +39,6 @@ def run_sims(n_sims: int, strategy: Strategy, n_moving_obstacles: int):
     print('Average time to goal: ', np.mean(time_steps_to_goal))
 
 
-run_sims(n_sims=10, strategy=Strategy.LOOK_AHEAD, n_moving_obstacles=10)
-run_sims(n_sims=10, strategy=Strategy.CONTINUE, n_moving_obstacles=10)
-run_sims(n_sims=10, strategy=Strategy.WAIT, n_moving_obstacles=10)
+run_sims(n_sims=20, strategy=Strategy.LOOK_AHEAD, n_moving_obstacles=5)
+run_sims(n_sims=20, strategy=Strategy.CONTINUE, n_moving_obstacles=5)
+run_sims(n_sims=20, strategy=Strategy.WAIT, n_moving_obstacles=5)
