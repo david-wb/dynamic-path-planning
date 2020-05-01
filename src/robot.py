@@ -42,7 +42,7 @@ class Robot:
         self.lookahead_steps = lookahead_steps
 
         self.radius = 5
-        self.rrt_planner = DynamicRRT(env, 10, 10000, self.radius + 10)
+        self.rrt_planner = DynamicRRT(env, 10, 10000, self.radius + 5)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
@@ -85,7 +85,8 @@ class Robot:
         # Update metrics
         self.metrics.distance_traveled += np.linalg.norm(next_pos - self.current_pos)
         self.metrics.time_steps += 1
-        if self.env.check_collision(self.current_pos[0], self.current_pos[1], self.radius):
+
+        if self.env.check_dynamic_collision(self.current_pos[0], self.current_pos[1], self.radius):
             self.metrics.num_collisions += 1
 
         if self.replan_wait > 0:

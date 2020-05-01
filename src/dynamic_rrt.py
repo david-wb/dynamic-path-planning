@@ -20,7 +20,8 @@ class Node:
 
 
 class DynamicRRT:
-    def __init__(self, environment: Environment, delta_q=20, max_nodes=1000, collision_tolerance=10):
+    def __init__(self, environment: Environment, delta_q=20, max_nodes=1000,
+                 collision_tolerance=10):
         self.replan_max_nodes = 800
         self.delta_q = delta_q
         self.environment = environment
