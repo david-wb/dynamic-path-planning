@@ -37,7 +37,7 @@ while True:
 
     cv2.imshow("environment", img)
 
-    if robot.reached_goal:
+    if robot.metrics.reached_goal:
         break
 
     cv2.waitKey(1)
