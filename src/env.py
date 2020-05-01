@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import src.utils as utils
 
+
 class MovingObstacle:
     def __init__(self, x: int, y: int, radius=10):
         self.x = x

@@ -42,7 +42,7 @@ class Robot:
         self.lookahead_steps = lookahead_steps
 
         self.radius = 5
-        self.rrt_planner = DynamicRRT(env, 10, 5000, self.radius + 10)
+        self.rrt_planner = DynamicRRT(env, 10, 10000, self.radius + 10)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
