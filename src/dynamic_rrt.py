@@ -21,6 +21,7 @@ class Node:
 
 class DynamicRRT:
     def __init__(self, environment: Environment, delta_q=20, max_nodes=1000, collision_tolerance=10):
+        self.replan_max_nodes = 500
         self.delta_q = delta_q
         self.environment = environment
         self.max_nodes = max_nodes
@@ -100,7 +101,7 @@ class DynamicRRT:
                 valid_goal_ancestors.append(node)
             node = node.parent
 
-        while len(nodes) < self.max_nodes:
+        while len(nodes) < self.replan_max_nodes:
             free_point = self.sample_point(future_obs)
             nearest_node = DynamicRRT.nearest_node(nodes, free_point)
             new_node = self.get_new_node(nearest_node, free_point, future_obs)

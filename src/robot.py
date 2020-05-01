@@ -8,17 +8,19 @@ from src.env import Environment, MovingObstacle
 
 
 class Robot:
-    def __init__(self, env: Environment,
+    def __init__(self,
+                 env: Environment,
                  start: Tuple[int, int],
                  goal: Tuple[int, int],
                  velocity=2,
-                 strategy='lookahead'):
+                 lookahead_steps=10):
         self.env = env
-        self.radius = 5
-        self.rrt_planner = DynamicRRT(env, 10, 1000, self.radius + 5)
         self.start = start
         self.goal = goal
-        self.strategy = strategy
+        self.radius = 5
+
+        self.lookahead_steps = lookahead_steps
+        self.rrt_planner = DynamicRRT(env, 10, 2000, self.radius + 5)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
@@ -88,16 +90,22 @@ class Robot:
         return result
 
     def replan_lookahead(self, obstacles: List[MovingObstacle]):
-        future_robot_poses = self.get_future_positions(10)
+        future_robot_poses = self.get_future_positions(self.lookahead_steps)
         future_obs: List[MovingObstacle] = []
         for obs in obstacles:
-            future_obs += obs.get_future_positions(10)
+            future_obs += obs.get_future_positions(self.lookahead_steps)
 
         collision_obs = []
         for i, robot_pos in enumerate(future_robot_poses):
             for obs in future_obs:
-                distance = np.linalg.norm(robot_pos - obs.get_pos())
-                if distance < obs.radius + self.radius:
+
+                distance_current = np.linalg.norm(self.current_pos - obs.get_pos())
+                distance_future = np.linalg.norm(robot_pos - obs.get_pos())
+
+                if distance_current < obs.radius + self.radius + 3:
+                    continue
+
+                if distance_future < obs.radius + self.radius:
                     collision_obs.append(obs)
 
         if collision_obs:

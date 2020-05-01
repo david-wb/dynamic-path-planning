@@ -4,11 +4,14 @@ import cv2
 
 from src.env import Environment
 from src.robot import Robot
+import numpy as np
+
+np.random.seed(2)
 
 # Create environment
 env = Environment(n_moving_obstacles=20)
 
-robot = Robot(env=env, start=(1, 1), goal=(295, 400), strategy='lookahead')
+robot = Robot(env=env, start=(1, 1), goal=(295, 400))
 
 i = 0
 while True:
