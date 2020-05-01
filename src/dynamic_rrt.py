@@ -20,8 +20,9 @@ class Node:
 
 
 class DynamicRRT:
-    def __init__(self, environment: Environment, delta_q=20, max_nodes=1000, collision_tolerance=10):
-        self.replan_max_nodes = 500
+    def __init__(self, environment: Environment, delta_q=20, max_nodes=1000,
+                 collision_tolerance=10):
+        self.replan_max_nodes = 800
         self.delta_q = delta_q
         self.environment = environment
         self.max_nodes = max_nodes
@@ -48,7 +49,6 @@ class DynamicRRT:
                 dist_to_goal = np.linalg.norm(new_node.value - goal)
                 if dist_to_goal < 5:
                     self.goal_node = new_node
-                    print(len(nodes))
                     return
 
         print('failed to find path')
@@ -110,10 +110,8 @@ class DynamicRRT:
                 nodes.append(new_node)
                 dist_to_goal = np.linalg.norm(new_node.value - self.goal_pos)
                 if dist_to_goal < self.delta_q:
-                    print(len(nodes))
                     self.goal_node = new_node
                     return
-        print('failed to replan')
 
     def reachable_nodes(self, node: Node):
         if not node.children:

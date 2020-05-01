@@ -2,9 +2,28 @@ from typing import Tuple, List
 
 import cv2
 import numpy as np
+from enum import Enum
 
 from src.dynamic_rrt_star import DynamicRRTStar, Node
 from src.env import Environment, MovingObstacle
+
+
+class Strategy(Enum):
+    CONTINUE = 'CONTINUE'
+    WAIT = 'WAIT'
+    LOOK_AHEAD = 'LOOK_AHEAD'
+
+
+class RobotMetrics:
+    def __init__(self,
+                 reached_goal: bool,
+                 time_steps: int,
+                 distance_traveled: float,
+                 num_collisions: int):
+        self.reached_goal = reached_goal
+        self.time_steps = time_steps
+        self.distance_traveled = distance_traveled
+        self.num_collisions = num_collisions
 
 
 class Robot:
@@ -13,54 +32,90 @@ class Robot:
                  start: Tuple[int, int],
                  goal: Tuple[int, int],
                  velocity=2,
+                 strategy: Strategy = Strategy.LOOK_AHEAD,
                  lookahead_steps=10):
         self.env = env
         self.start = start
         self.goal = goal
-        self.radius = 5
-
+        self.velocity = velocity
+        self.strategy = strategy
         self.lookahead_steps = lookahead_steps
-        self.rrt_planner = DynamicRRTStar(env, 10, 2000, self.radius + 20)
+        self.radius = 5
+        self.rrt_planner = DynamicRRTStar(env, 10, 2000, self.radius + 5)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
         self.current_pos = np.copy(self.path[0].value)
-        self.velocity = velocity
-        self.steps = 0
-        self.reached_goal = False
         self.replan_wait = 0
+
+        # Metrics to track
+        self.metrics = RobotMetrics(False, 0, 0, 0)
 
     def act(self, env: Environment):
         current_node = self.path[self.current_node_i]
 
         if current_node == self.path[-1]:
-            print(f'Goal reached in {self.steps} time steps.')
-            self.reached_goal = True
+            self.metrics.reached_goal = True
             return
 
-        next_node = self.path[self.current_node_i + 1]
+        obstacles = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=50)
 
+        next_node = self.path[self.current_node_i + 1]
         ax, ay = self.current_pos
         bx, by = next_node.value
-
         direction = np.array([bx - ax, by - ay])
         distance = np.linalg.norm(direction)
         direction /= (distance + 1e-8)
 
-        obstacles = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=50)
+        if self.strategy == Strategy.LOOK_AHEAD:
+            if len(obstacles) > 0 and self.replan_wait == 0:
+                self.replan_lookahead(obstacles)
 
-        if len(obstacles) > 0 and self.replan_wait == 0:
-            self.replan_lookahead(obstacles)
+            if distance <= self.velocity:
+                self.current_node_i += 1
+                next_pos = np.copy(next_node.value)
+            else:
+                next_pos = self.current_pos + direction * self.velocity
+        elif self.strategy == Strategy.WAIT:
+            next_pos = self.wait_strategy(obstacles, next_node, distance, direction)
+        else:  # continue strategy
+            next_pos = self.continue_strategy(next_node, distance, direction)
 
-        if distance <= self.velocity:
-            self.current_node_i += 1
-            self.current_pos = np.copy(next_node.value)
-        else:
-            self.current_pos += direction * self.velocity
+        # Update metrics
+        self.metrics.distance_traveled += np.linalg.norm(next_pos - self.current_pos)
+        self.metrics.time_steps += 1
+
+        if self.env.check_dynamic_collision(self.current_pos[0], self.current_pos[1], self.radius):
+            self.metrics.num_collisions += 1
 
         if self.replan_wait > 0:
             self.replan_wait -= 1
-        self.steps += 1
+        self.current_pos = next_pos
+
+    def continue_strategy(self,
+                          next_node:
+                          Node, distance: float,
+                          direction: np.ndarray) -> np.ndarray:
+        if distance <= self.velocity:
+            self.current_node_i += 1
+            next_pos = np.copy(next_node.value)
+        else:
+            next_pos = self.current_pos + direction * self.velocity
+        return next_pos
+
+    def wait_strategy(self,
+                      obstacles: List[MovingObstacle],
+                      next_node:
+                      Node, distance: float,
+                      direction: np.ndarray) -> np.ndarray:
+        if len(obstacles) > 0:
+            next_pos = self.current_pos
+        elif distance <= self.velocity:
+            self.current_node_i += 1
+            next_pos = np.copy(next_node.value)
+        else:
+            next_pos = self.current_pos + direction * self.velocity
+        return next_pos
 
     def get_future_positions(self, steps=1):
         result = []
@@ -151,8 +206,3 @@ class Robot:
                          thickness=-1,
                          lineType=cv2.LINE_AA)
         return img
-
-
-
-
-
