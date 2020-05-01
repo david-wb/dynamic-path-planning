@@ -46,6 +46,7 @@ class DynamicRRT:
                 dist_to_goal = np.linalg.norm(new_node.value - goal)
                 if dist_to_goal < 5:
                     self.goal_node = new_node
+                    print(len(nodes))
                     return
 
         print('failed to find path')
@@ -86,6 +87,18 @@ class DynamicRRT:
         start_node.children = [current_node]
         nodes = [start_node, current_node]
 
+        node = self.goal_node.parent
+        valid_goal_ancestors = [self.goal_node]
+        while node is not None:
+            valid = True
+            for obs in future_obs:
+                if obs.check_collision(node.value, self.collision_tolerance):
+                    valid = False
+                    break
+            if valid:
+                valid_goal_ancestors.append(node)
+            node = node.parent
+
         while len(nodes) < self.max_nodes:
             free_point = self.sample_point(future_obs)
             nearest_node = DynamicRRT.nearest_node(nodes, free_point)
@@ -93,9 +106,9 @@ class DynamicRRT:
 
             if new_node:
                 nodes.append(new_node)
-
                 dist_to_goal = np.linalg.norm(new_node.value - self.goal_pos)
-                if dist_to_goal < 5:
+                if dist_to_goal < self.delta_q:
+                    print(len(nodes))
                     self.goal_node = new_node
                     return
         print('failed to replan')

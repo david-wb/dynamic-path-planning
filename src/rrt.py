@@ -34,7 +34,7 @@ class RRT:
                     break
         return self.tree
 
-    def replan(self, obstacle,current_pos,current_node):
+    def replan(self, obstacle, current_pos, current_node):
         # get all nodes within the tree and search for node impacted by the obstacle
         nodes = list(self.tree.keys())
         np_nodes = np.asarray(nodes)
@@ -51,7 +51,7 @@ class RRT:
                     print("obstacle is at goal, impossible to re-plan")
                 else:
                     self.tree.pop(nodes[index])
-                    orphan_node_index = max(orphan_node_index,index)
+                    orphan_node_index = max(orphan_node_index, index)
         if not obstructed:
             return self.path
         orphan_node = self.path[self.path.index(nodes[orphan_node_index])]
@@ -60,7 +60,7 @@ class RRT:
         obstacle_current_x = obstacle.x
         obstacle_current_y = obstacle.y
         for i in range(5):
-            self.environment.add_dynamic_obstacle(obstacle_current_x,obstacle_current_y,obstacle.radius)
+            self.environment.add_dynamic_obstacle(obstacle_current_x, obstacle_current_y, obstacle.radius)
             obstacle_current_x += obstacle.velocity[0]
             obstacle_current_y += obstacle.velocity[1]
 
@@ -70,7 +70,7 @@ class RRT:
             self.tree[nodes[index]] = current_pos
 
         replanner = RRT(self.environment, self.delta_q, self.max_node, self.collision_tolerance)
-        replanner.plan((current_pos[0],current_pos[1]), orphan_node)
+        replanner.plan((current_pos[0], current_pos[1]), orphan_node)
         replanned_path = replanner.get_path()
 
         pre_path = self.path[:self.path.index(current_node)+1]
@@ -111,7 +111,7 @@ class RRT:
         np_nodes = np.asarray(nodes)
         kd_tree = KDTree(np_nodes)
         nearest_distance, nearest_neighbor = kd_tree.query([point], k=1)
-        return nodes[nearest_neighbor[0][0]],nearest_distance[0][0]
+        return nodes[nearest_neighbor[0][0]],  nearest_distance[0][0]
 
     def new_node(self, random_point, nearest_node, nearest_distance):
         if nearest_distance < self.delta_q:

@@ -13,7 +13,7 @@ robot = Robot(env=env, start=(1, 1), goal=(295, 400), strategy='lookahead')
 i = 0
 while True:
     i += 1
-    print('step: ', i)
+    # print('step: ', i)
 
     sleep(0.03)
 

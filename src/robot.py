@@ -45,7 +45,7 @@ class Robot:
         distance = np.linalg.norm(direction)
         direction /= (distance + 1e-8)
 
-        obstacle = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=40)
+        obstacle = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=50)
 
         if obstacle is not None and self.replan_wait == 0:
             self.replan_lookahead(obstacle)
@@ -64,11 +64,10 @@ class Robot:
         result = []
 
         node_i = self.current_node_i
-        node = self.path[self.current_node_i]
         pos = np.copy(self.current_pos)
 
         for i in range(steps):
-            if node == self.path[-1]:
+            if node_i == len(self.path) - 1:
                 break
 
             next_node = self.path[node_i + 1]
@@ -89,12 +88,17 @@ class Robot:
         return result
 
     def replan_lookahead(self, obstacle: MovingObstacle):
-        future_robot_poses = self.get_future_positions(5)
+        future_robot_poses = self.get_future_positions(10)
         future_obs: List[MovingObstacle] = []
         obs_pos = obstacle.get_pos()
-        for i in range(5):
+        none_colliding_future_obs = []
+
+        for i in range(10):
             obs_pos += obstacle.velocity
             future_obs.append(MovingObstacle(obs_pos[0], obs_pos[1], obstacle.radius))
+
+            if np.linalg.norm(self.current_pos - obs_pos) < obstacle.radius + self.radius:
+                none_colliding_future_obs.append(MovingObstacle(obs_pos[0], obs_pos[1], obstacle.radius))
 
         collision_obs = []
         for (r_p, obs) in zip(future_robot_poses, future_obs):

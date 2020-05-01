@@ -36,6 +36,10 @@ class MovingObstacle:
     def get_pos(self):
         return np.array([self.x, self.y], dtype=np.float)
 
+    def check_collision(self, point: np.ndarray, radius: float):
+        d = np.linalg.norm(self.get_pos() - point)
+        return d <= self.radius + radius
+
 
 class Environment:
     def __init__(self, width=300, height=500, n_moving_obstacles=10):
@@ -48,7 +52,7 @@ class Environment:
         # initialize static obstacles as black boxes in the form (x, y, w, h)
 
         n_cols = 3
-        n_rows = 9
+        n_rows = 7
         dx = self.width // (n_cols + 1)
         dy = self.height // (n_rows + 1)
         for r in range(n_rows):
