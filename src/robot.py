@@ -3,7 +3,7 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 
-from src.dynamic_rrt import DynamicRRT, Node
+from src.dynamic_rrt_star import DynamicRRTStar, Node
 from src.env import Environment, MovingObstacle
 
 
@@ -20,7 +20,7 @@ class Robot:
         self.radius = 5
 
         self.lookahead_steps = lookahead_steps
-        self.rrt_planner = DynamicRRT(env, 10, 2000, self.radius + 20)
+        self.rrt_planner = DynamicRRTStar(env, 10, 2000, self.radius + 20)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
