@@ -20,7 +20,7 @@ class Robot:
         self.radius = 5
 
         self.lookahead_steps = lookahead_steps
-        self.rrt_planner = DynamicRRT(env, 10, 2000, self.radius + 5)
+        self.rrt_planner = DynamicRRT(env, 10, 2000, self.radius + 20)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
@@ -102,10 +102,10 @@ class Robot:
                 distance_current = np.linalg.norm(self.current_pos - obs.get_pos())
                 distance_future = np.linalg.norm(robot_pos - obs.get_pos())
 
-                if distance_current < obs.radius + self.radius + 3:
+                if distance_current < obs.radius + self.radius + 10:
                     continue
 
-                if distance_future < obs.radius + self.radius:
+                if distance_future < obs.radius + self.radius + 2:
                     collision_obs.append(obs)
 
         if collision_obs:

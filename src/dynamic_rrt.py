@@ -145,7 +145,10 @@ class DynamicRRT:
         X = stats.truncnorm(-x_mu / sigma, (x_upper - x_mu) / sigma, loc=x_mu, scale=sigma)
         Y = stats.truncnorm(-y_mu / sigma, (y_upper - y_mu) / sigma, loc=y_mu, scale=sigma)
 
-        while True:
+        max_samples = 10000
+        n = 0
+        while n < max_samples:
+            n += 1
             x = X.rvs(1)[0]
             y = Y.rvs(1)[0]
             valid = True
