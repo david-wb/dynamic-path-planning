@@ -2,9 +2,7 @@ from typing import List, Optional
 
 import cv2
 import numpy as np
-np.random.seed(3)
 import src.utils as utils
-
 
 class MovingObstacle:
     def __init__(self, x: int, y: int, radius=10):
