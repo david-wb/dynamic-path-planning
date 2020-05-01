@@ -5,7 +5,7 @@ from src.env import Environment
 from src.robot import Robot, Strategy
 
 
-def run_sim(robot: Robot, env: Environment, max_steps=1000):
+def run_sim(robot: Robot, env: Environment, max_steps=2000):
     for i in range(max_steps):
         env.step()  # Update environment
         robot.act(env)  # Do robot action
