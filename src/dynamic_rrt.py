@@ -1,9 +1,15 @@
+from enum import Enum
 from typing import List, Optional
 
 import numpy as np
 import scipy.stats as stats
 
 from .env import Environment, MovingObstacle
+
+
+class PointSampling(Enum):
+    UNIFORM = 0
+    GUIDED = 1
 
 
 class Node:
@@ -20,17 +26,22 @@ class Node:
 
 
 class DynamicRRT:
-    def __init__(self, environment: Environment, delta_q=20, max_nodes=1000,
+    def __init__(self,
+                 environment: Environment,
+                 point_sampling: PointSampling,
+                 delta_q=20,
+                 max_nodes=1000,
                  collision_tolerance=10):
         self.replan_max_nodes = 800
         self.delta_q = delta_q
         self.environment = environment
+        self.point_sampling = point_sampling
         self.max_nodes = max_nodes
         self.collision_tolerance = collision_tolerance
+
         self.root = None
         self.goal_node = None
         self.goal_pos = None
-        self.nodes = []
         self.path = None
 
     def plan(self, start, goal):
@@ -84,7 +95,7 @@ class DynamicRRT:
         assert nearest is not None
         return nearest
 
-    def replan(self, future_obs: List[MovingObstacle], start_node, start_pos: np.ndarray):
+    def replan(self, future_obs: List[MovingObstacle], start_node, start_pos: np.ndarray) -> int:
         current_node = Node(value=start_pos, parent=start_node)
         start_node.children = [current_node]
         nodes = [start_node, current_node]
@@ -111,7 +122,8 @@ class DynamicRRT:
                 dist_to_goal = np.linalg.norm(new_node.value - self.goal_pos)
                 if dist_to_goal < self.delta_q:
                     self.goal_node = new_node
-                    return
+                    return len(nodes)
+        return len(nodes)
 
     def reachable_nodes(self, node: Node):
         if not node.children:
@@ -134,6 +146,12 @@ class DynamicRRT:
         return path
 
     def sample_point(self, extra_obs: Optional[List[MovingObstacle]] = None) -> np.ndarray:
+        if self.point_sampling == PointSampling.UNIFORM:
+            return self.sample_point_uniform(extra_obs)
+        else:
+            return self.sample_point_normal(extra_obs)
+
+    def sample_point_normal(self, extra_obs: Optional[List[MovingObstacle]] = None) -> np.ndarray:
         x_upper = self.environment.width
         y_upper = self.environment.height
         x_mu = self.goal_pos[0]
@@ -149,6 +167,27 @@ class DynamicRRT:
             n += 1
             x = X.rvs(1)[0]
             y = Y.rvs(1)[0]
+            valid = True
+            if extra_obs:
+                for obs in extra_obs:
+                    if np.linalg.norm(obs.get_pos() - (x, y)) <= self.collision_tolerance + obs.radius:
+                        valid = False
+                        break
+
+            if valid and not self.environment.check_static_collision(x, y, self.collision_tolerance):
+                return np.array((x, y))
+
+    def sample_point_uniform(self, extra_obs: Optional[List[MovingObstacle]] = None) -> np.ndarray:
+        x_upper = self.environment.width
+        y_upper = self.environment.height
+
+        max_samples = 10000
+        n = 0
+        while n < max_samples:
+            n += 1
+            x = np.random.uniform(0, x_upper)
+            y = np.random.uniform(0, y_upper)
+
             valid = True
             if extra_obs:
                 for obs in extra_obs:

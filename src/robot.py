@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from enum import Enum
 
+from src.dynamic_rrt import DynamicRRT, PointSampling
 from src.dynamic_rrt_star import DynamicRRTStar, Node
 from src.env import Environment, MovingObstacle
 
@@ -24,6 +25,7 @@ class RobotMetrics:
         self.time_steps = time_steps
         self.distance_traveled = distance_traveled
         self.num_collisions = num_collisions
+        self.replan_num_nodes = []
 
 
 class Robot:
@@ -31,6 +33,7 @@ class Robot:
                  env: Environment,
                  start: Tuple[int, int],
                  goal: Tuple[int, int],
+                 point_sampling: PointSampling,
                  velocity=2,
                  strategy: Strategy = Strategy.LOOK_AHEAD,
                  lookahead_steps=10):
@@ -41,21 +44,34 @@ class Robot:
         self.strategy = strategy
         self.lookahead_steps = lookahead_steps
         self.radius = 5
-        self.rrt_planner = DynamicRRTStar(env, 10, 2000, self.radius + 5)
+        self.rrt_planner = DynamicRRT(environment=env,
+                                      point_sampling=point_sampling,
+                                      delta_q=10,
+                                      max_nodes=2000,
+                                      collision_tolerance=self.radius + 5)
         self.rrt_planner.plan(start, goal)
         self.path: List[Node] = self.rrt_planner.get_path()
         self.current_node_i = 0
-        self.current_pos = np.copy(self.path[0].value)
+        if self.path:
+            self.current_pos = np.copy(self.path[0].value)
+        else:
+            self.current_pos = None
         self.replan_wait = 0
 
         # Metrics to track
         self.metrics = RobotMetrics(False, 0, 0, 0)
+        self.done = False
 
     def act(self, env: Environment):
-        current_node = self.path[self.current_node_i]
+        if not self.path:
+            # failed to find path
+            self.done = True
+            return
 
+        current_node = self.path[self.current_node_i]
         if current_node == self.path[-1]:
             self.metrics.reached_goal = True
+            self.done = True
             return
 
         obstacles = env.detect_moving_obstacles(x=self.current_pos[0], y=self.current_pos[1], distance=50)
@@ -157,18 +173,19 @@ class Robot:
                 distance_current = np.linalg.norm(self.current_pos - obs.get_pos())
                 distance_future = np.linalg.norm(robot_pos - obs.get_pos())
 
-                if distance_current < obs.radius + self.radius + 10:
+                if distance_current < obs.radius + self.radius + 5:
                     continue
 
-                if distance_future < obs.radius + self.radius + 2:
+                if distance_future < obs.radius + self.radius + 3:
                     collision_obs.append(obs)
 
         if collision_obs:
             print('replanning...')
             self.replan_wait = 10
-            self.rrt_planner.replan(collision_obs,
-                                    self.path[self.current_node_i],
-                                    np.copy(self.current_pos))
+            num_nodes = self.rrt_planner.replan(collision_obs,
+                                                self.path[self.current_node_i],
+                                                np.copy(self.current_pos))
+            self.metrics.replan_num_nodes.append(num_nodes)
             self.path = self.rrt_planner.get_path()
 
     def draw(self, img):

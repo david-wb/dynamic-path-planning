@@ -2,6 +2,7 @@ from time import sleep
 
 import cv2
 
+from src.dynamic_rrt import PointSampling
 from src.env import Environment
 from src.robot import Robot
 import numpy as np
@@ -11,7 +12,7 @@ np.random.seed(2)
 # Create environment
 env = Environment(n_moving_obstacles=20)
 
-robot = Robot(env=env, start=(1, 1), goal=(295, 400))
+robot = Robot(env=env, point_sampling=PointSampling.GUIDED, start=(1, 1), goal=(295, 400))
 
 i = 0
 while True:
@@ -37,7 +38,7 @@ while True:
 
     cv2.imshow("environment", img)
 
-    if robot.metrics.reached_goal:
+    if robot.done:
         break
 
     cv2.waitKey(1)

@@ -1,0 +1,17 @@
+Strategy:  LOOK_AHEAD
+Goal reached rate:  0.96
+Average distance traveled:  538.828863269336
+Average number of collisions:  0.5
+Average time to goal:  298.0625
+
+Strategy:  CONTINUE
+Goal reached rate:  0.92
+Average distance traveled:  491.1573775312318
+Average number of collisions:  3.98
+Average time to goal:  283.9130434782609
+
+Strategy:  WAIT
+Goal reached rate:  0.98
+Average distance traveled:  520.6510153165138
+Average number of collisions:  5.2
+Average time to goal:  615.0408163265306

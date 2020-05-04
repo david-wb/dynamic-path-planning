@@ -36,7 +36,6 @@ class DynamicRRTStar:
     def plan(self, start, goal):
         self.root = Node(value=np.array(start, dtype=np.float))
         self.goal_pos = np.array(goal, dtype=np.float)
-        self.goal_node = Node(value=self.goal_pos, cost=10000000000)
         nodes = [self.root]
         self.goal_pos = np.array(goal, dtype=np.float)
 
@@ -49,7 +48,7 @@ class DynamicRRTStar:
                 nodes.append(new_node)
 
                 dist_to_goal = np.linalg.norm(new_node.value - goal)
-                if dist_to_goal < 5 and new_node.cost < self.goal_node.cost:
+                if dist_to_goal < 5 and (self.goal_node is None or new_node.cost < self.goal_node.cost):
                     self.goal_node = new_node
                     print(len(nodes))
 
