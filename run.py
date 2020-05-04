@@ -4,18 +4,21 @@ import cv2
 
 from src.env import Environment
 from src.robot import Robot
+import numpy as np
+
+np.random.seed(2)
 
 # Create environment
-env = Environment()
+env = Environment(n_moving_obstacles=20)
 
 robot = Robot(env=env, start=(1, 1), goal=(295, 400))
 
 i = 0
 while True:
     i += 1
-    print('step: ', i)
+    # print('step: ', i)
 
-    sleep(0.01)
+    sleep(0.03)
 
     # Update environment
     env.step()
@@ -34,7 +37,7 @@ while True:
 
     cv2.imshow("environment", img)
 
-    if robot.reached_goal:
+    if robot.metrics.reached_goal:
         break
 
     cv2.waitKey(1)

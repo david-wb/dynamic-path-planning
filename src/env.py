@@ -2,10 +2,7 @@ from typing import List, Optional
 
 import cv2
 import numpy as np
-
 import src.utils as utils
-
-np.random.seed(0)
 
 
 class MovingObstacle:
@@ -33,9 +30,24 @@ class MovingObstacle:
         self.x += self.velocity[0]
         self.y += self.velocity[1]
 
+    def get_pos(self):
+        return np.array([self.x, self.y], dtype=np.float)
+
+    def check_collision(self, point: np.ndarray, radius: float):
+        d = np.linalg.norm(self.get_pos() - point)
+        return d <= self.radius + radius
+
+    def get_future_positions(self, steps: int) -> List['MovingObstacle']:
+        result = []
+        pos = self.get_pos()
+        for i in range(steps):
+            pos += self.velocity
+            result.append(MovingObstacle(pos[0], pos[1], self.radius))
+        return result
+
 
 class Environment:
-    def __init__(self, width=300, height=500, n_moving_obstacles=5):
+    def __init__(self, width=300, height=500, n_moving_obstacles=10):
         self.static_obstacles = []
         self.moving_obstacles: List[MovingObstacle] = []
         self.temp_moving_obstacles = []
@@ -45,7 +57,7 @@ class Environment:
         # initialize static obstacles as black boxes in the form (x, y, w, h)
 
         n_cols = 3
-        n_rows = 9
+        n_rows = 7
         dx = self.width // (n_cols + 1)
         dy = self.height // (n_rows + 1)
         for r in range(n_rows):
@@ -86,30 +98,27 @@ class Environment:
 
     def check_dynamic_collision(self, x: float, y: float, radius: float) -> bool:
         """checks if the given circle collides with given dynamic obstacle """
-
-        if x < 0 or x > self.width or y < 0 or y > self.height:
-            return True
-
-        for (rx, ry, rradius) in self.temp_moving_obstacles:
-            if utils.circle_touches_circle(x, y, radius, rx, ry, rradius):
+        for obs in self.moving_obstacles:
+            if obs.check_collision(np.array([x, y]), radius):
                 return True
-
         return False
 
     def check_collision(self, x: float, y: float, radius: float) -> bool:
-        return self.check_dynamic_collision(x,y,radius) or self.check_static_collision(x,y,radius)
+        return self.check_dynamic_collision(x, y, radius) or self.check_static_collision(x, y, radius)
 
-    def add_dynamic_obstacle(self,x: float, y: float, radius: float):
+    def add_dynamic_obstacle(self, x: float, y: float, radius: float):
         self.temp_moving_obstacles.append((x, y, radius))
 
-    def detect_moving_obstacles(self, x: float, y: float, distance=20.0) -> Optional[MovingObstacle]:
+    def detect_moving_obstacles(self, x: float, y: float, distance=20.0) -> Optional[List[MovingObstacle]]:
+        result = []
         for obs in self.moving_obstacles:
             dx = x - obs.x
             dy = y - obs.y
             d = np.linalg.norm([dx, dy])
 
             if d <= distance:
-                return obs
+                result.append(obs)
+        return result
 
     def draw(self) -> np.array:
         map = np.ones((self.height, self.width, 3))
